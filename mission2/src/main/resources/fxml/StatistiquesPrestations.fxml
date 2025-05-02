@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.StatistiquesPrestationsController"
+            prefWidth="1800" prefHeight="1000">
+    <top>
+        <VBox spacing="10">
+            <HBox alignment="TOP_LEFT">
+                <padding>
+                    <Insets top="0" right="10" bottom="10" left="10"/>
+                </padding>
+                <Button text="← Retour"
+                        onAction="#retourAccueil"
+                        style="-fx-font-size: 14px; -fx-background-color: lightgray; -fx-font-weight: bold;" />
+            </HBox>
+
+            <HBox alignment="CENTER">
+                <Label text="Page des Statistiques Prestations"
+                       style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+            </HBox>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="30" alignment="CENTER">
+            <HBox spacing="30" alignment="CENTER">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+            <BarChart fx:id="barServiceParType" prefHeight="300" prefWidth="600">
+                <xAxis>
+                    <CategoryAxis label="Service"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Nombre"/>
+                </yAxis>
+            </BarChart>
+                <PieChart fx:id="pieRepartitionIntervention" prefHeight="300" prefWidth="550"/>
+
+            </HBox>
+
+            <HBox spacing="30" alignment="CENTER">
+            <BarChart fx:id="barServiceParPrix" prefHeight="300" prefWidth="600">
+                <xAxis>
+                    <CategoryAxis label="Service"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Prix (€)"/>
+                </yAxis>
+            </BarChart>
+                <PieChart fx:id="pieTopPrestations" prefHeight="300" prefWidth="550"/>
+
+
+            </HBox>
+        </VBox>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER" >
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <Button text="📥 Télécharger les graphiques en PDF"
+                    onAction="#telechargerGraphiquesPDF"
+                    style="-fx-font-size: 14px; -fx-background-color: darkseagreen; -fx-font-weight: bold; -fx-text-fill: white;" />
+        </HBox>
+    </bottom>
+</BorderPane>

@@ -1,27 +1,100 @@
-import javafx.application.Application;
-        import javafx.scene.Scene;
-        import javafx.scene.control.Button;
-        import javafx.scene.control.Label;
-        import javafx.scene.layout.VBox;
-        import javafx.stage.Stage;
+<?xml version="1.0" encoding="UTF-8"?>
 
-        public class MainApp extends Application {
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 
-        @Override
-        public void start(Stage primaryStage) {
-        Label label = new Label("Bienvenue !");
-        Button bouton = new Button("Clique ici");
-        bouton.setOnAction(e -> label.setText("Bravo, tu as cliqué !"));
 
-        VBox root = new VBox(10, label, bouton);
-        Scene scene = new Scene(root, 300, 200);
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.MainController"
+            prefWidth="1800" prefHeight="1000">
 
-        primaryStage.setTitle("Ma première interface JavaFX");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-        }
 
-        public static void main(String[] args) {
-        launch(args);
-        }
-        }
+
+        <top>
+            <HBox alignment="CENTER" spacing="10">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <children>
+
+                    <ImageView fitHeight="100" fitWidth="100">
+                        <image>
+                            <Image url="@/images/logo_alone.png" preserveRatio="true"/>
+                        </image>
+                    </ImageView>
+
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+
+                    <Button text="Quitter" onAction="#fermerApplication"/>
+                </children>
+            </HBox>
+        </top>
+
+
+
+
+    <center>
+        <VBox alignment="TOP_CENTER" spacing="20">
+
+            <padding>
+                <Insets top="30" />
+            </padding>
+            <children>
+                <Label text="Business Care"
+                       style="-fx-font-size: 40px; -fx-font-weight: bold; -fx-text-fill: #007b7f;"/>
+
+                <Region prefHeight="100"/>
+                <HBox alignment="CENTER" spacing="30">
+                    <children>
+
+
+                        <VBox alignment="CENTER" spacing="10">
+                            <children>
+                                <ImageView fitHeight="80" fitWidth="80">
+                                    <image>
+                                        <Image url="@/images/societes_image.png" preserveRatio="true"/>
+                                    </image>
+                                </ImageView>
+                                <Button text="Statistiques Clients" onAction="#afficherClients"/>
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="10">
+                            <children>
+                                <ImageView fitHeight="80" fitWidth="80">
+                                    <image>
+                                        <Image url="@/images/events_image.png" preserveRatio="true"/>
+                                    </image>
+                                </ImageView>
+                                <Button text="Statistiques Événements" onAction="#afficherEvenements"/>
+                            </children>
+                        </VBox>
+
+                        <VBox alignment="CENTER" spacing="10">
+                            <children>
+                                <ImageView fitHeight="80" fitWidth="80">
+                                    <image>
+                                        <Image url="@/images/prestations_image.png" preserveRatio="true"/>
+                                    </image>
+                                </ImageView>
+                                <Button text="Statistiques Prestations" onAction="#afficherPrestations"/>
+                            </children>
+                        </VBox>
+
+
+
+                    </children>
+                </HBox>
+                <Region prefHeight="100"/>
+                <Button text="Générer PDF" onAction="#genererPDF"/>
+
+            </children>
+        </VBox>
+    </center>
+
+</BorderPane>

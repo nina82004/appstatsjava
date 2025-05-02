@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.StatistiquesEventsController"
+            prefWidth="1800" prefHeight="1000">
+
+    <top>
+        <VBox spacing="10">
+
+            <HBox alignment="TOP_LEFT">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <Button text="← Retour"
+                        onAction="#retourAccueil"
+                        style="-fx-font-size: 14px; -fx-background-color: lightgray; -fx-font-weight: bold;" />
+            </HBox>
+
+            <HBox alignment="CENTER">
+                <Label text="Page des Statistiques Événements"
+                       style="-fx-font-size: 36px; -fx-font-weight: bold;" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="30" alignment="CENTER">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+
+            <HBox spacing="30" alignment="CENTER">
+                <VBox spacing="10" alignment="CENTER">
+                    <Label text="Répartition par type d'événement"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                    <BarChart fx:id="barTypeEvenement" prefHeight="300" prefWidth="550">
+                        <xAxis><CategoryAxis label="Type d'événement"/></xAxis>
+                        <yAxis><NumberAxis label="Nombre"/></yAxis>
+                    </BarChart>
+                </VBox>
+
+                <VBox spacing="10" alignment="CENTER">
+                    <Label text="Fréquence des événements"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                    <PieChart fx:id="pieFrequence" prefHeight="300" prefWidth="550"/>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="30" alignment="CENTER">
+                <VBox spacing="10" alignment="CENTER">
+                    <Label text="Top 5 événements les plus demandés"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                    <BarChart fx:id="barTopEvenements" prefHeight="300" prefWidth="550">
+                        <xAxis><CategoryAxis label="Événement"/></xAxis>
+                        <yAxis><NumberAxis label="Popularité"/></yAxis>
+                    </BarChart>
+                </VBox>
+
+                <VBox spacing="10" alignment="CENTER">
+                    <Label text="Part relative des événements populaires"
+                           style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                    <PieChart fx:id="pieTopEvenements" prefHeight="300" prefWidth="550"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
