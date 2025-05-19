@@ -1,18 +1,22 @@
 package controller;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+
 import java.net.http.*;
 import java.net.URI;
 import java.net.http.HttpResponse.BodyHandlers;
+
+import util.Config;
 import util.SessionContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 
 public class LoginController {
@@ -28,16 +32,21 @@ public class LoginController {
 
         try {
 
-            HttpClient client = HttpClient.newHttpClient();
+
             JSONObject json = new JSONObject();
             json.put("email", email);
             json.put("password", password);
 
+            HttpClient client = HttpClient.newHttpClient();
+
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/auth/login"))
+                    .uri(URI.create(Config.getApiBaseUrl() + "/auth/login"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
                     .build();
+
+            System.out.println("Envoi JSON : " + json.toString());
+            System.out.println("URL appelée : " + Config.getApiBaseUrl() + "/auth/login");
 
             HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
 
@@ -45,7 +54,6 @@ public class LoginController {
                 JSONObject body = new JSONObject(response.body());
 
                 String token = body.getString("token");
-
                 System.out.println("Token reçu : " + token);
 
                 SessionContext.setToken(token);
@@ -63,7 +71,7 @@ public class LoginController {
                 } else {
                     errorLabel.setText("Accès réservé aux administrateurs.");
                 }
-            }else {
+            } else {
                 errorLabel.setText("Email ou mot de passe incorrect.");
             }
 

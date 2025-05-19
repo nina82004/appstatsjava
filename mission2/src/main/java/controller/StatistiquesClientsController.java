@@ -25,7 +25,7 @@ import com.itextpdf.layout.Document;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import util.Config;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class StatistiquesClientsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_client/top-clients"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_client/top-clients"))
                     .GET()
                     .build();
             HttpClient client = HttpClient.newHttpClient();
@@ -80,7 +80,7 @@ public class StatistiquesClientsController {
     private void afficherRepartitionParType() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_client/client-type-distribution"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_client/client-type-distribution"))
                     .GET()
                     .build();
             HttpClient client = HttpClient.newHttpClient();
@@ -106,7 +106,7 @@ public class StatistiquesClientsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_client/tariff-by-type"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_client/tariff-by-type"))
                     .GET()
                     .build();
             HttpClient client = HttpClient.newHttpClient();
@@ -128,7 +128,7 @@ public class StatistiquesClientsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_client/top-clients-pie"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_client/top-clients-pie"))
                     .GET()
                     .build();
             HttpClient client = HttpClient.newHttpClient();

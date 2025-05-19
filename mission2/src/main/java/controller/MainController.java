@@ -6,6 +6,8 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
 import java.io.IOException;
+
+import util.Config;
 import  util.SessionContext;
 import com.itextpdf.layout.element.Image;
 import javafx.scene.paint.Color;
@@ -109,7 +111,7 @@ public class MainController {
 
                     HttpClient client = HttpClient.newHttpClient();
                     HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create("http://localhost:8000/auth/logout"))
+                            .uri(URI.create(Config.getApiBaseUrl() +"/auth/logout"))
                             .header("token", token)
                             .POST(HttpRequest.BodyPublishers.noBody())
                             .build();

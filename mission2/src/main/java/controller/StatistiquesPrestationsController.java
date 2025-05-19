@@ -38,7 +38,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-
+import util.Config;
 public class StatistiquesPrestationsController {
 
     @FXML
@@ -64,7 +64,7 @@ public class StatistiquesPrestationsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_prestations/service-count-by-type"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_prestations/service-count-by-type"))
                     .GET()
                     .build();
 
@@ -88,7 +88,7 @@ public class StatistiquesPrestationsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_prestations/intervention-distribution"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_prestations/intervention-distribution"))
                     .GET()
                     .build();
 
@@ -114,7 +114,7 @@ public class StatistiquesPrestationsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_prestations/service-price"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_prestations/service-price"))
                     .GET()
                     .build();
 
@@ -137,7 +137,7 @@ public class StatistiquesPrestationsController {
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8000/stats_prestations/top5-prestations"))
+                    .uri(URI.create(Config.getApiBaseUrl() +"/stats_prestations/top5-prestations"))
                     .GET()
                     .build();
 
