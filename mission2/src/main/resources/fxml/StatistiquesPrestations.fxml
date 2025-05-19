@@ -9,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="controller.StatistiquesPrestationsController"
-            prefWidth="1800" prefHeight="1000">
+            prefWidth="1500" prefHeight="900">
     <top>
         <VBox spacing="10">
             <HBox alignment="TOP_LEFT">

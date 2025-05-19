@@ -10,32 +10,148 @@ import javafx.stage.Stage;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import util.DatabaseConnection;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import javafx.scene.SnapshotParameters;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
-import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.image.WritableImage;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.stage.FileChooser;
+
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 public class StatistiquesClientsController {
+
+    @FXML
+    public BarChart<String, Number> barTopClients;
+    @FXML
+    public PieChart pieTypeClient;
+    @FXML
+    public BarChart<String, Number> barTarifParType;
+    @FXML
+    public PieChart pieTopClients;
+
+    @FXML
+    public void initialize() {
+        afficherTop5ParRevenu();
+        afficherRepartitionParType();
+        afficherTarifParTypeClient();
+        afficherRepartitionTop5Clients();
+    }
+
+    private void afficherTop5ParRevenu() {
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Top 5 clients par chiffre d’affaires");
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_client/top-clients"))
+                    .GET()
+                    .build();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONArray data = new JSONArray(response.body());
+
+            for (int i = 0; i < data.length(); i++) {
+                JSONObject obj = data.getJSONObject(i);
+                series.getData().add(new XYChart.Data<>(obj.getString("name"), obj.getDouble("revenue")));
+            }
+
+            barTopClients.getData().add(series);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherRepartitionParType() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_client/client-type-distribution"))
+                    .GET()
+                    .build();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONObject json = new JSONObject(response.body());
+
+            ObservableList<PieChart.Data> data = FXCollections.observableArrayList(
+                    new PieChart.Data("Starter", json.getInt("Starter")),
+                    new PieChart.Data("Basic", json.getInt("Basic")),
+                    new PieChart.Data("Premium", json.getInt("Premium"))
+            );
+
+            pieTypeClient.setData(data);
+            pieTypeClient.setTitle("Répartition par type de client");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherTarifParTypeClient() {
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Tarif annuel par type de client (€)");
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_client/tariff-by-type"))
+                    .GET()
+                    .build();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONObject data = new JSONObject(response.body());
+
+            for (String key : data.keySet()) {
+                series.getData().add(new XYChart.Data<>(key, data.getDouble(key)));
+            }
+
+            barTarifParType.getData().add(series);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherRepartitionTop5Clients() {
+        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_client/top-clients-pie"))
+                    .GET()
+                    .build();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONArray array = new JSONArray(response.body());
+
+            double total = 0;
+            for (int i = 0; i < array.length(); i++) {
+                total += array.getJSONObject(i).getDouble("total");
+            }
+
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                double percent = (obj.getDouble("total") / total) * 100;
+                data.add(new PieChart.Data(obj.getString("name") + String.format(" (%.1f%%)", percent), obj.getDouble("total")));
+            }
+
+            pieTopClients.setData(data);
+            pieTopClients.setTitle("Répartition CA Top 5 clients");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     public void retourAccueil(ActionEvent event) {
@@ -47,154 +163,6 @@ public class StatistiquesClientsController {
             stage.setMaximized(true);
             stage.show();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-   public BarChart<String, Number> barTopClients;
-    @FXML
-    public PieChart pieTypeClient;
-    @FXML
-    public  BarChart<String, Number> barTarifParType;
-    @FXML
-    public  PieChart pieTopClients;
-
-    @FXML
-    public void initialize() {
-        afficherTop5ParRevenu();
-        afficherRepartitionParType();
-        afficherTarifParTypeClient();
-        afficherRepartitionTop5Clients();
-    }
-
-
-    private void afficherTop5ParRevenu() {
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Top 5 clients par chiffre d’affaires");
-
-        String sql = "SELECT name, revenue FROM companies ORDER BY revenue DESC LIMIT 5";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String nom = rs.getString("name");
-                int revenue = rs.getInt("revenue");
-                series.getData().add(new XYChart.Data<>(nom, revenue));
-            }
-
-            barTopClients.getData().add(series);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    private void afficherRepartitionParType() {
-
-        String sql = "SELECT size FROM companies";
-
-        int countStarter = 0;
-        int countBasic = 0;
-        int countPremium = 0;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                int size = rs.getInt("size");
-                if (size >= 1 && size <= 30) countStarter++;
-                else if (size <= 250) countBasic++;
-                else countPremium++;
-            }
-
-            ObservableList<PieChart.Data> data = FXCollections.observableArrayList(
-                    new PieChart.Data("Starter", countStarter),
-                    new PieChart.Data("Basic", countBasic),
-                    new PieChart.Data("Premium", countPremium)
-            );
-
-            pieTypeClient.setData(data);
-            pieTypeClient.setTitle("Répartition par type de client");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void afficherTarifParTypeClient() {
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Tarif annuel par type de client (€)");
-
-        String sql = """
-        SELECT 
-          CASE 
-            WHEN c.size BETWEEN 1 AND 30 THEN 'Starter'
-            WHEN c.size BETWEEN 31 AND 250 THEN 'Basic'
-            ELSE 'Premium'
-          END AS client_type,
-          SUM(e.amount) AS average_tarif
-        FROM estimates e
-        JOIN companies c ON e.company_id = c.company_id
-        WHERE YEAR(e.creation_date) = 2025
-        GROUP BY client_type
-    """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String type = rs.getString("client_type");
-                double tarif = rs.getDouble("average_tarif");
-                series.getData().add(new XYChart.Data<>(type, tarif));
-            }
-
-            barTarifParType.getData().add(series);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void afficherRepartitionTop5Clients() {
-        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
-
-        String sql = """
-        SELECT c.name, SUM(e.amount) AS total
-        FROM estimates e
-        JOIN companies c ON e.company_id = c.company_id
-        WHERE YEAR(e.creation_date) = 2025
-        GROUP BY c.company_id, c.name
-        ORDER BY total DESC
-        LIMIT 5
-    """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String name = rs.getString("name");
-                double totalAmount = rs.getDouble("total");
-                data.add(new PieChart.Data(name, totalAmount));
-            }
-
-            // Calculer le total pour les pourcentages
-            double globalTotal = data.stream().mapToDouble(PieChart.Data::getPieValue).sum();
-
-            // Ajouter les pourcentages dans le label
-            for (PieChart.Data d : data) {
-                double pourcentage = (d.getPieValue() / globalTotal) * 100;
-                d.setName(String.format("%s (%.1f%%)", d.getName(), pourcentage));
-            }
-
-            pieTopClients.setData(data);
-            pieTopClients.setTitle("Répartition CA Top 5 clients");
-
-        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -213,7 +181,6 @@ public class StatistiquesClientsController {
             File file = fileChooser.showSaveDialog(((Node) event.getSource()).getScene().getWindow());
 
             if (file != null) {
-
                 File temp1 = File.createTempFile("graph1", ".png");
                 File temp2 = File.createTempFile("graph2", ".png");
                 File temp3 = File.createTempFile("graph3", ".png");
@@ -223,7 +190,6 @@ public class StatistiquesClientsController {
                 ImageIO.write(SwingFXUtils.fromFXImage(image2, null), "png", temp2);
                 ImageIO.write(SwingFXUtils.fromFXImage(image3, null), "png", temp3);
                 ImageIO.write(SwingFXUtils.fromFXImage(image4, null), "png", temp4);
-
 
                 PdfWriter writer = new PdfWriter(file.getAbsolutePath());
                 PdfDocument pdfDoc = new PdfDocument(writer);
@@ -240,16 +206,14 @@ public class StatistiquesClientsController {
                 document.add(new com.itextpdf.layout.element.Image(img4).scaleToFit(500, 400));
 
                 document.close();
-
                 System.out.println("PDF généré avec succès : " + file.getAbsolutePath());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     public WritableImage getChartImage(Node chart) {
         return chart.snapshot(new SnapshotParameters(), null);
     }
-
-
 }

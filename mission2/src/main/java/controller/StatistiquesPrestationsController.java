@@ -7,30 +7,17 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.chart.PieChart;
-
-import java.util.ArrayList;
-import java.util.List;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
-
 import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
+import javafx.embed.swing.SwingFXUtils;
 
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -38,22 +25,145 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
-import util.DatabaseConnection;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
 
-
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatistiquesPrestationsController {
 
     @FXML
-    public  BarChart<String, Number> barServiceParType;
+    public BarChart<String, Number> barServiceParType;
     @FXML
-    public  PieChart pieRepartitionIntervention;
+    public PieChart pieRepartitionIntervention;
     @FXML
-    public  BarChart<String, Number> barServiceParPrix;
+    public BarChart<String, Number> barServiceParPrix;
+    @FXML
+    public PieChart pieTopPrestations;
 
     @FXML
-    public  PieChart pieTopPrestations;
+    public void initialize() {
+        afficherNombrePrestationsParType();
+        afficherRepartitionIntervention();
+        afficherServiceParPrix();
+        afficherTop5PrestationsPie();
+    }
+
+    private void afficherNombrePrestationsParType() {
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Nombre de prestations par type");
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_prestations/service-count-by-type"))
+                    .GET()
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println(response.body());
+            JSONObject json = new JSONObject(response.body());
+
+            for (String key : json.keySet()) {
+                series.getData().add(new XYChart.Data<>(key, json.getInt(key)));
+            }
+
+            barServiceParType.getData().add(series);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherRepartitionIntervention() {
+        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_prestations/intervention-distribution"))
+                    .GET()
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONObject json = new JSONObject(response.body());
+
+            for (String key : json.keySet()) {
+                data.add(new PieChart.Data(key, json.getInt(key)));
+            }
+
+            pieRepartitionIntervention.setData(data);
+            pieRepartitionIntervention.setTitle("Répartition des modes d’intervention");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherServiceParPrix() {
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Coût par service");
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_prestations/service-price"))
+                    .GET()
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONObject json = new JSONObject(response.body());
+
+            for (String key : json.keySet()) {
+                series.getData().add(new XYChart.Data<>(key, json.getDouble(key)));
+            }
+
+            barServiceParPrix.getData().add(series);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void afficherTop5PrestationsPie() {
+        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://localhost:8000/stats_prestations/top5-prestations"))
+                    .GET()
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            JSONArray array = new JSONArray(response.body());
+
+            double total = 0;
+            for (int i = 0; i < array.length(); i++) {
+                total += array.getJSONObject(i).getDouble("total");
+            }
+
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject obj = array.getJSONObject(i);
+                double count = obj.getDouble("total");
+                String name = obj.getString("service");
+                double percent = (count / total) * 100;
+                data.add(new PieChart.Data(name + String.format(" (%.1f%%)", percent), count));
+            }
+
+            pieTopPrestations.setData(data);
+            pieTopPrestations.setTitle("Top 5 prestations réservées");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     public void retourAccueil(ActionEvent event) {
@@ -70,167 +180,53 @@ public class StatistiquesPrestationsController {
     }
 
     @FXML
-    public void initialize() {
-        afficherNombrePrestationsParType();
-        afficherRepartitionIntervention();
-        afficherServiceParPrix();
-        afficherTop5PrestationsPie();
+    private void telechargerGraphiquesPDF(ActionEvent event) {
+        WritableImage image1 = barServiceParType.snapshot(null, null);
+        WritableImage image2 = pieRepartitionIntervention.snapshot(null, null);
+        WritableImage image3 = barServiceParPrix.snapshot(null, null);
+        WritableImage image4 = pieTopPrestations.snapshot(null, null);
 
-    }
-
-    private void afficherNombrePrestationsParType() {
-        String sql = "SELECT type, COUNT(*) AS total FROM contractors GROUP BY type";
-
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Nombre de prestations par type");
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String type = rs.getString("type");
-                int count = rs.getInt("total");
-                series.getData().add(new XYChart.Data<>(type, count));
-            }
-
-            barServiceParType.getData().add(series);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    private void afficherRepartitionIntervention() {
-        String sql = "SELECT intervention, COUNT(*) AS total FROM contractors GROUP BY intervention";
-
-        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String intervention = rs.getString("intervention");
-                int count = rs.getInt("total");
-                data.add(new PieChart.Data(intervention, count));
-            }
-
-            pieRepartitionIntervention.setData(data);
-            pieRepartitionIntervention.setTitle("Répartition des modes d’intervention");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void afficherServiceParPrix() {
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Coût par service");
-
-        String sql = "SELECT service, service_price FROM contractors";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String service = rs.getString("service");
-                int price = rs.getInt("service_price");
-                series.getData().add(new XYChart.Data<>(service, price));
-            }
-
-            barServiceParPrix.getData().add(series);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void afficherTop5PrestationsPie() {
-        ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
-
-        String sql = """
-        SELECT c.service, COUNT(*) AS total
-        FROM contractors c
-        LEFT JOIN (
-            SELECT a.contractor_id
-            FROM appointments a
-            JOIN booked_appointments b ON a.appointment_id = b.appointment_id
-            UNION ALL
-            SELECT m.contractor_id
-            FROM medical_appointments m
-        ) AS all_appointments ON c.contractor_id = all_appointments.contractor_id
-        GROUP BY c.service
-        ORDER BY total DESC
-        LIMIT 5
-    """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            double totalSum = 0;
-            List<PieChart.Data> tempList = new ArrayList<>();
-
-            while (rs.next()) {
-                String service = rs.getString("service");
-                int total = rs.getInt("total");
-                totalSum += total;
-                tempList.add(new PieChart.Data(service, total));
-            }
-
-            for (PieChart.Data d : tempList) {
-                double percent = (d.getPieValue() / totalSum) * 100;
-                d.setName(String.format("%s (%.1f%%)", d.getName(), percent));
-            }
-
-            data.addAll(tempList);
-            pieTopPrestations.setData(data);
-            pieTopPrestations.setTitle("Top 5 prestations réservées");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    private void telechargerGraphiquesPDF() {
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Enregistrer le PDF");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
-            File file = fileChooser.showSaveDialog(null);
-            if (file == null) return;
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier PDF", "*.pdf"));
+            File file = fileChooser.showSaveDialog(((Node) event.getSource()).getScene().getWindow());
 
-            List<WritableImage> chartImages = new ArrayList<>();
-            chartImages.add(barServiceParType.snapshot(null, null));
-            chartImages.add(pieRepartitionIntervention.snapshot(null, null));
-            chartImages.add(barServiceParPrix.snapshot(null, null));
-            chartImages.add(pieTopPrestations.snapshot(null, null));
+            if (file != null) {
 
-            PdfWriter writer = new PdfWriter(file.getAbsolutePath());
-            PdfDocument pdf = new PdfDocument(writer);
-            Document document = new Document(pdf);
+                File temp1 = File.createTempFile("graph1", ".png");
+                File temp2 = File.createTempFile("graph2", ".png");
+                File temp3 = File.createTempFile("graph3", ".png");
+                File temp4 = File.createTempFile("graph4", ".png");
 
-            for (WritableImage chartImage : chartImages) {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                ImageIO.write(SwingFXUtils.fromFXImage(chartImage, null), "png", os);
-                ImageData imageData = ImageDataFactory.create(os.toByteArray());
-                com.itextpdf.layout.element.Image pdfImage = new com.itextpdf.layout.element.Image(imageData);
-                pdfImage.setAutoScale(true);
-                document.add(pdfImage);
-                document.add(new Paragraph("\n"));
+                // Sauvegarde les images en PNG
+                ImageIO.write(SwingFXUtils.fromFXImage(image1, null), "png", temp1);
+                ImageIO.write(SwingFXUtils.fromFXImage(image2, null), "png", temp2);
+                ImageIO.write(SwingFXUtils.fromFXImage(image3, null), "png", temp3);
+                ImageIO.write(SwingFXUtils.fromFXImage(image4, null), "png", temp4);
+
+                // Création du PDF
+                PdfWriter writer = new PdfWriter(file.getAbsolutePath());
+                PdfDocument pdfDoc = new PdfDocument(writer);
+                Document document = new Document(pdfDoc);
+
+
+                ImageData img1 = ImageDataFactory.create(temp1.getAbsolutePath());
+                ImageData img2 = ImageDataFactory.create(temp2.getAbsolutePath());
+                ImageData img3 = ImageDataFactory.create(temp3.getAbsolutePath());
+                ImageData img4 = ImageDataFactory.create(temp4.getAbsolutePath());
+
+                document.add(new com.itextpdf.layout.element.Image(img1).scaleToFit(500, 400));
+                document.add(new com.itextpdf.layout.element.Image(img2).scaleToFit(500, 400));
+                document.add(new com.itextpdf.layout.element.Image(img3).scaleToFit(500, 400));
+                document.add(new com.itextpdf.layout.element.Image(img4).scaleToFit(500, 400));
+
+                document.close();
+                System.out.println("PDF généré avec succès : " + file.getAbsolutePath());
             }
-
-            document.close();
-            System.out.println("PDF généré avec succès.");
-        } catch (Exception e) {
+        } catch (IOException e) {
+            System.err.println(" Erreur lors de la génération du PDF : " + e.getMessage());
             e.printStackTrace();
         }
     }
-
-    public WritableImage getChartImage(Node chart) {
-        return chart.snapshot(new SnapshotParameters(), null);
-    }
-
 }

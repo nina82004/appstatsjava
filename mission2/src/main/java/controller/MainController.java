@@ -6,10 +6,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.scene.Node;
 import java.io.IOException;
-
+import  util.SessionContext;
 import com.itextpdf.layout.element.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
@@ -34,6 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.event.ActionEvent;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.URI;
 
 public class MainController {
 
@@ -78,6 +85,70 @@ public class MainController {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+    @FXML
+    public void handleLogout() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation");
+        alert.setHeaderText("Déconnexion");
+        alert.setContentText("Voulez-vous vraiment vous déconnecter ?");
+
+        Window owner = Stage.getWindows().stream()
+                .filter(Window::isShowing)
+                .findFirst()
+                .orElse(null);
+        if (owner != null) {
+            alert.initOwner(owner);
+        }
+
+        alert.showAndWait().ifPresent(result -> {
+            if (result == ButtonType.OK) {
+                try {
+                    String token = SessionContext.getToken();
+                    System.out.println("Token utilisé pour logout : " + token);
+
+                    HttpClient client = HttpClient.newHttpClient();
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create("http://localhost:8000/auth/logout"))
+                            .header("token", token)
+                            .POST(HttpRequest.BodyPublishers.noBody())
+                            .build();
+
+                    client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                            .thenAccept(response -> {
+                                if (response.statusCode() == 200) {
+                                    System.out.println(" Déconnexion réussie !");
+                                    SessionContext.clear();
+
+                                    Platform.runLater(() -> {
+                                        try {
+                                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+                                            Parent root = loader.load();
+                                            Stage stage = (Stage) Stage.getWindows().stream()
+                                                    .filter(Window::isShowing)
+                                                    .findFirst()
+                                                    .orElse(null);
+                                            if (stage != null) {
+                                                stage.setScene(new Scene(root));
+                                                stage.setTitle("Connexion Business Care");
+                                                stage.setMaximized(false);
+                                                stage.show();
+                                            }
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
+
+                                } else {
+                                    System.out.println("Échec de déconnexion : " + response.body());
+                                }
+                            });
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @FXML

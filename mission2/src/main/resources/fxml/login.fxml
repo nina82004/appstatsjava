@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+           fx:controller="controller.LoginController"
+           prefWidth="1500" prefHeight="900">
+
+    <children>
+        <VBox spacing="20" alignment="CENTER">
+            <padding>
+                <Insets top="40" left="30" right="30" bottom="30"/>
+            </padding>
+
+            <Label text="Connexion Admin" style="-fx-font-size: 28px; -fx-font-weight: bold;"/>
+
+            <TextField fx:id="emailField" promptText="Email" maxWidth="300"/>
+            <PasswordField fx:id="passwordField" promptText="Mot de passe" maxWidth="300"/>
+
+            <Button text="Se connecter" onAction="#handleLogin"/>
+
+            <Label fx:id="errorLabel" textFill="red"/>
+        </VBox>
+    </children>
+</StackPane>
